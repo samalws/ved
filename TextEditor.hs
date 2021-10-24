@@ -21,20 +21,26 @@ type CmdsList = M.Map Char Cmd -- TODO IntMap
 getBuffer :: EditorMonad Buffer
 getBuffer = stateBuffer <$> get
 
-getBufferF :: (Buffer -> a) -> EditorMonad a
-getBufferF = (<$> getBuffer)
+getCoord :: EditorMonad Coord
+getCoord = stateCoord <$> get
 
 modifyBuffer :: (Buffer -> Buffer) -> EditorMonad ()
 modifyBuffer f = modify (\s -> s { stateBuffer = f $ stateBuffer s })
 
+modifyCoord :: (Coord -> Coord) -> EditorMonad ()
+modifyCoord f = modify (\s -> s { stateCoord = f $ stateCoord s })
+
 setBuffer :: Buffer -> EditorMonad ()
 setBuffer = modifyBuffer . const
+
+setCoord :: Coord -> EditorMonad ()
+setCoord = modifyCoord . const
 
 bufferGetLine :: Int -> Buffer -> Maybe Line
 bufferGetLine = flip atMay
 
 getLine :: Int -> EditorMonad (Maybe Line)
-getLine = getBufferF . bufferGetLine
+getLine = (<$> getBuffer) . bufferGetLine
 
 modifyLine :: Int -> (Line -> Line) -> EditorMonad ()
 modifyLine n f = modifyBuffer $ bufferModifyLine n f
@@ -53,7 +59,7 @@ showBuffer :: Buffer -> String
 showBuffer = intercalate "\n"
 
 zCmd :: Cmd
-zCmd = CmdShort $ getBufferF (('\n' : ) . showBuffer) >>= lift . putStrLn
+zCmd = CmdShort $ ((('\n' : ) . showBuffer) <$> getBuffer) >>= lift . putStrLn
 
 cmdsList :: CmdsList
 cmdsList = M.fromList [('z',zCmd)]
