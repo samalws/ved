@@ -39,8 +39,8 @@ setCoord = modifyCoord . const
 bufferGetLine :: Int -> Buffer -> Maybe Line
 bufferGetLine = flip atMay
 
-getLine :: Int -> EditorMonad (Maybe Line)
-getLine = (<$> getBuffer) . bufferGetLine
+getBufLine :: Int -> EditorMonad (Maybe Line)
+getBufLine = (<$> getBuffer) . bufferGetLine
 
 modifyLine :: Int -> (Line -> Line) -> EditorMonad ()
 modifyLine n f = modifyBuffer $ bufferModifyLine n f
@@ -58,11 +58,17 @@ bufferSetLine = setAt
 showBuffer :: Buffer -> String
 showBuffer = intercalate "\n"
 
-zCmd :: Cmd
-zCmd = CmdShort $ ((('\n' : ) . showBuffer) <$> getBuffer) >>= lift . putStrLn
+cmd_z :: Cmd
+cmd_z = CmdShort $ ((('\n' : ) . showBuffer) <$> getBuffer) >>= lift . putStrLn
+
+cmd_p :: Cmd
+cmd_p = CmdShort $ do
+  coord <- getCoord
+  line  <- getBufLine $ fst coord
+  lift $ putStrLn $ '\n':(maybe "" id line)
 
 cmdsList :: CmdsList
-cmdsList = M.fromList [('z',zCmd)]
+cmdsList = M.fromList [('z',cmd_z),('p',cmd_p)]
 
 editorLongCmdInProgress :: LongCmd -> EditorMonad ()
 editorLongCmdInProgress f = lift getChar >>= (either editorLongCmdInProgress id . runLongCmd f)
