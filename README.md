@@ -5,7 +5,25 @@ Unofficial command list:
 - `c` - change text from mark until now (`C` for lines)
 - `d` - delete text from mark until now (`D` for lines)
 - `y` - yank text from mark until now (`Y` for lines)
+- `j`/`J` - join lines from mark until now
 - `i` - insert text before the cursor (`I` - insert lines before the cursor)
 - `a` - insert text after the cursor (`A` - ditto)
 - `q(name) (enter)` - record a macro with a given name (`q` again stops recording)
 - `Q(name)(num) (enter)` - repeat command with a given name a given number of times (`name` defaults to last recorded, `num` defaults to 1)
+- `x`?? - paste before the cursor (`X` - paste lines before the cursor)
+- `w`, `W`, `(`, `)`, `[`, `]`, `{`, `}`, ... - skip to next/prev word, opening/closing paren, ... (add ones for paragraph etc)
+- `/(text) (enter)` - search for text; use `<`??? and `>`??? to navigate results
+- `h`, `j`, `k`, `l` - move like in vim (capitalize for going all the way to the end in that direction)
+- `p`, `n` - print this line, showing line number if `n` is used; shows cursor location (how?)
+- `P`, `N` - `p`/`n` but also print nearby lines
+- `-(num) (enter)`, `+(num) (enter)` - set the number of lines printed before/after when `P` and `N` is used - by default these are both set to 5
+- `` `(cmds) (enter)`` - set the command that gets run every time you move the cursor left/right - by default this is set to `p`
+- `~(cmds) (enter)` - set the command that gets run every time you move the cursor up/down - by default this is set to `N`
+- `f` - print current file name
+- `F (name) (enter)` - set current file name
+- `w` - write to current file
+- `W (name) (enter)` - write to file `name`, and set current file name to `name`
+- `r` - read from current file
+- `R (name) (enter)` - read from file `name`, and set current file name to `name`
+- `q` - quit
+- `Q` - force quit
