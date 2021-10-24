@@ -1,30 +1,31 @@
-import Safe
-import Data.List.Index
 import Control.Monad.Trans.State
 import Control.Monad.Trans.Class
 import Data.Maybe
 import Data.List
+import Data.List.Index
+import Safe
 import System.IO
 import qualified Data.Map as M
 
 type Line = String -- TODO array
 type Buffer = [Line] -- TODO array
-type EditorMonad a = StateT Buffer IO a -- TODO IO??
 type LineNum = Int
 type CharNum = Int
 type Coord = (LineNum, CharNum)
-data LongCmd = LongCmd { runLongCmd :: Char -> Either LongCmd (EditorMonad ()) }
+data StateInfo = StateInfo { stateBuffer :: Buffer, stateCoord :: Coord }
+type EditorMonad a = StateT StateInfo IO a -- TODO IO??
 data Cmd = CmdShort (EditorMonad ()) | CmdLong LongCmd
+data LongCmd = LongCmd { runLongCmd :: Char -> Either LongCmd (EditorMonad ()) }
 type CmdsList = M.Map Char Cmd -- TODO IntMap
 
 getBuffer :: EditorMonad Buffer
-getBuffer = get
+getBuffer = stateBuffer <$> get
 
 getBufferF :: (Buffer -> a) -> EditorMonad a
 getBufferF = (<$> getBuffer)
 
 modifyBuffer :: (Buffer -> Buffer) -> EditorMonad ()
-modifyBuffer = modify 
+modifyBuffer f = modify (\s -> s { stateBuffer = f $ stateBuffer s })
 
 setBuffer :: Buffer -> EditorMonad ()
 setBuffer = modifyBuffer . const
@@ -74,4 +75,4 @@ editor allCmds = do
 
 main = do
   hSetBuffering stdin NoBuffering
-  runStateT (editor cmdsList) ["test line 1","test line 2"]
+  runStateT (editor cmdsList) (StateInfo { stateBuffer = ["test line 1","test line 2"], stateCoord = (0,0) })
