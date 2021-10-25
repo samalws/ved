@@ -17,6 +17,7 @@ type EditorMonad a = StateT StateInfo IO a -- TODO IO??
 data Cmd = CmdShort (EditorMonad ()) | CmdLong LongCmd
 data LongCmd = LongCmd { runLongCmd :: Char -> Either LongCmd (EditorMonad ()) }
 type CmdsList = M.Map Char Cmd -- TODO IntMap
+-- TODO maybe carriage return to write over the same stuff
 
 getBuffer :: EditorMonad Buffer
 getBuffer = stateBuffer <$> get
@@ -58,17 +59,41 @@ bufferSetLine = setAt
 showBuffer :: Buffer -> String
 showBuffer = intercalate "\n"
 
-cmd_z :: Cmd
-cmd_z = CmdShort $ ((('\n' : ) . showBuffer) <$> getBuffer) >>= lift . putStrLn
+cmd_z :: EditorMonad ()
+cmd_z = ((('\n' : ) . showBuffer) <$> getBuffer) >>= lift . putStrLn
 
-cmd_p :: Cmd
-cmd_p = CmdShort $ do
+cmd_p :: EditorMonad ()
+cmd_p = do
   coord <- getCoord
   line  <- getBufLine $ fst coord
   lift $ putStrLn $ '\n':(maybe "" id line)
+  lift $ putStrLn $ replicate (snd coord) ' ' <> "^"
+
+cmd_n :: EditorMonad ()
+cmd_n = do
+  coord <- getCoord
+  line  <- getBufLine $ fst coord
+  lift $ putStrLn $ "\n" <> (show $ fst coord) <> " " <> maybe "" id line
+  lift $ putStrLn $ replicate (snd coord + length (show $ fst coord) + 1) ' ' <> "^"
+
+cmd_posthl = cmd_p -- todo
+cmd_postjk = cmd_n -- todo
+
+cmd_hjkl :: Coord -> EditorMonad ()
+cmd_hjkl (a,b) = do
+  modifyCoord (\(x,y) -> (x+a,y+b))
+  if a==0 then cmd_posthl else cmd_postjk
 
 cmdsList :: CmdsList
-cmdsList = M.fromList [('z',cmd_z),('p',cmd_p)]
+cmdsList = M.fromList [
+  ('z',CmdShort cmd_z),
+  ('p',CmdShort cmd_p),
+  ('n',CmdShort cmd_n),
+  ('h',CmdShort $ cmd_hjkl ( 0,-1)),
+  ('j',CmdShort $ cmd_hjkl ( 1, 0)),
+  ('k',CmdShort $ cmd_hjkl (-1, 0)),
+  ('l',CmdShort $ cmd_hjkl ( 0, 1))
+  ]
 
 editorLongCmdInProgress :: LongCmd -> EditorMonad ()
 editorLongCmdInProgress f = lift getChar >>= (either editorLongCmdInProgress id . runLongCmd f)
